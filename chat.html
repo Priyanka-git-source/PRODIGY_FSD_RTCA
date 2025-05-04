@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a href="/logout" style="float: right; margin: 10px;">Logout</a>
+<h2>Welcome to Chat</h2>
+<p>Your Username: <span id="username"></span></p>
+
+<input type="text" id="to" placeholder="Send To (username)" />
+<input type="text" id="message" placeholder="Message" />
+<button onclick="sendMessage()">Send</button>
+
+<ul id="chat"></ul>
+
+<script>
+let username = "";
+
+// Fetch current user
+fetch("/user")
+  .then(res => res.json())
+  .then(data => {
+      username = data.username;
+      document.getElementById("username").innerText = username;
+      socket.send(JSON.stringify({ type: "init", username }));
+  })
+  .catch(() => window.location.href = "/login.html");
+
+// WebSocket connection
+const socket = new WebSocket("ws://" + location.host);
+
+socket.onmessage = function(event) {
+    const msg = JSON.parse(event.data);
+    const li = document.createElement("li");
+    li.textContent = msg.from + ": " + msg.message;
+    document.getElementById("chat").appendChild(li);
+};
+
+function sendMessage() {
+    const to = document.getElementById("to").value;
+    const message = document.getElementById("message").value;
+    socket.send(JSON.stringify({ type: "chat", from: username, to, message }));
+}
+</script>
+
+</body>
+</html>
